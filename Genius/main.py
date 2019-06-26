@@ -1,4 +1,5 @@
 import requests
+import bs4
 base_url = "https://api.genius.com/"
 search_url = base_url + "search/"
 cli_id="NQP3U7EBpW_h2ivnQlecMD92f5dUFfmiNV8drV81dQaodxiyeWjzdRVfLKVshpb2"
@@ -10,7 +11,11 @@ def getLyric(author_name,music_title):
     req = req.json()
     for hit in req['response']['hits']:
         if author_name.lower() == hit["result"]["primary_artist"]["name"].lower():
-            return hit
+            link = hit['result']['url']
+            pagereq = requests.get(link)
+            text  = bs4.BeautifulSoup(pagereq.text, 'html.parser')
+            lyrics = text.find('div', class_='lyrics').get_text()
+            return lyrics
 
 a=input("Author name")
 b= input("Music name")

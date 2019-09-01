@@ -3,7 +3,7 @@ import requests
 import pytube
 import subprocess
 import os
-import pygame
+
 
 ## Tokens and base links ##
 genius_url = "https://api.genius.com/"
@@ -13,8 +13,7 @@ cli_tok="jgS62kc6s_PBjP3e0P7q7qR4lzC125MyqWWxhrLjn11o1Ndfh9cZ58wEe5IVnnRi"
 yt_key = "AIzaSyBnrEKxA6QZ6hTuNjj4LRuk9MDdQtI8NNA"
 geniusHeader = {'Authorization':'Bearer '+ cli_tok}
 
-## Pygame Start ##
-pygame.mixer.init()
+
 
 
 def getLyric(search):
@@ -33,18 +32,21 @@ def getLyric(search):
     lyrics = text.find('div', class_='lyrics').get_text()
     return lyrics
 
-
-def searchMusic(query):
-
-    data = {'q': query, 'part': 'snippet', 'key': yt_key}
-    req = requests.get(youtube_url,params=data)
-    print(req.url)
+def listMusic(query):
+    data = {'q': query, 'part': 'snippet', 'key': yt_key, }
+    req = requests.get(youtube_url, params=data)
     req = req.json()
     val = 1
+    listmus =[]
     for videos in req['items']:
-        print(str(val) + " - " + videos['snippet']['title'])
+        listmus.append(str(val) + " - " + videos['snippet']['title'])
         val+=1
-    val = int(input("digite o numero do vídeo desejado\n"))
+    return listmus
+def getMusic(query, val):
+
+    data = {'q': query, 'part': 'snippet', 'key': yt_key, }
+    req = requests.get(youtube_url,params=data)
+    req = req.json()
     return "http://youtube.com/watch?v=" + req['items'][val-1]['id']['videoId']
 
 
@@ -55,17 +57,15 @@ def downloadMusic(link):
     titreq = requests.get(youtube_url,params=data)
     titreq = titreq.json()
     titreq  = titreq['items'][0]['snippet']['title']
-    print(titreq)
     videos = pytube.YouTube(link).streams.filter(only_audio=True).all()
-    val = 1
     for video in videos:
         print(video.itag)
         if video.mime_type == "audio/mp4":
-            video.download(filename=titreq)
-            convert_video(titreq+'.mp4',titreq+".mp3")
-            os.remove(titreq + '.mp4')
+            video.download("/Songs",filename=titreq)
+            convert_video("/Songs/"+titreq+'.mp4','/Songs/'+titreq+".mp3")
+            os.remove("/Songs/"+titreq + '.mp4')
             break
-    return titreq
+    return titreq+".mp3"
 
 
 def convert_video(video_input, video_output):
@@ -73,13 +73,3 @@ def convert_video(video_input, video_output):
     cmds = ['ffmpeg', '-i', video_input, video_output]
     subprocess.Popen(cmds).wait()
 
-
-a = input("namaewa")
-videoName = downloadMusic(searchMusic(a))
-
-a=input("Nome da música com autor, de preferencia")
-req = getLyric(a)
-print(req)
-pygame.mixer.music.load(videoName+".mp3")
-pygame.mixer.music.play()
-input()
